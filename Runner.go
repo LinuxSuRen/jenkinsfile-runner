@@ -183,16 +183,14 @@ func InstallPlugins() {
 	}
 
 	for len(dependsOn) > 0 {
-		for _, shortname := range dependsOn {
-			if contains(installed, shortname) {
-				continue;
-			}
-			dependsOn = append(dependsOn, InstallPlugin(shortname, "latest")...)
-			installed = append(installed, shortname)
-		}
+		shortname := dependsOn[0]
+		dependsOn = dependsOn[1:]
+		if contains(installed, shortname) {
+			continue
+		} 
+		dependsOn = append(dependsOn, InstallPlugin(shortname, "latest")...)
+		installed = append(installed, shortname)
 	}
-
-	fmt.Printf("We have installed %s\n", installed)
 }
 
 func InstallPlugin(shortname string, version string) []string {
@@ -207,7 +205,7 @@ func InstallPlugin(shortname string, version string) []string {
 		defer out.Close()
 
 		url := fmt.Sprintf("http://updates.jenkins.io/download/plugins/%[1]s/%[2]s/%[1]s.hpi", shortname, version)
-		fmt.Printf("Downloading %s...\n", url)
+		fmt.Printf("Downloading %s:%s...\n", shortname, version)
 		resp, err := http.Get(url)
 		if err != nil {	    	
 	        panic(err)
