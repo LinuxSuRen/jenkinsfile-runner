@@ -16,7 +16,7 @@ b101522 - oups
 a33d5e6 - Update Jenkinsfile to introduce xxx 
 ```
 
-You indeed can check your Jenkinsfile is correct until it has been pushed to SCM and built by Jenkins.
+You indeed can't check your Jenkinsfile is correct until it has been pushed to SCM and built by Jenkins.
 Generaly speaking this is annoying one can't run a Jenkinsfile _but_ within a full featured Jenkins master.
 
 Jenkinsfile-runner intent to fix this by providing a command line tool to run a Jenkinsfile.
