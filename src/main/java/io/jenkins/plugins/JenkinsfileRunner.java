@@ -3,6 +3,7 @@ package io.jenkins.plugins;
 import hudson.Extension;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
+import hudson.model.Computer;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
@@ -49,12 +50,14 @@ public class JenkinsfileRunner extends RunListener<WorkflowRun> {
 
     @Override
     public void onStarted(WorkflowRun run, TaskListener listener) {
-        try {
-            run.writeWholeLogTo(System.out);
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Failed to redirect build log to stdout: " + e.getMessage());
-            System.exit(127);
-        }
+        Computer.threadPoolForRemoting.submit(() -> {
+            try {
+                run.writeWholeLogTo(System.out);
+            } catch (IOException | InterruptedException e) {
+                System.err.println("Failed to redirect build log to stdout: " + e.getMessage());
+                System.exit(127);
+            }
+        });
     }
 
     @Override
