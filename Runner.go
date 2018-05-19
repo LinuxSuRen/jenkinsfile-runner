@@ -23,7 +23,7 @@ func main() {
 	version := GetLatestCoreVersion()
     fmt.Printf("Running Pipeline on jenkins %s\n", version)
 
-	_, err = os.Stat(".jenkinsfile-runner/lib") 
+	_, err = os.Stat(".jenkinsfile-runner/plugins") 
 	if os.IsNotExist(err) {
 	    if err := os.MkdirAll(".jenkinsfile-runner/plugins", 0755); err != nil {
 	        panic(err)
@@ -47,16 +47,34 @@ func main() {
 		}
     }
 
+    if _, err = os.Stat(".jenkinsfile-runner/logging.properties"); err != nil {
+    	
+    	jul := []byte(`
+.level = INFO
+handlers= java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level=WARNING
+java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter`)
+		err := ioutil.WriteFile(".jenkinsfile-runner/logging.properties", jul, 0755)
+			if err != nil {
+			panic(err)
+		}
+    }
+
+
 
     fmt.Println("Starting Jenkins...")
-	cmd := exec.Command("java", "-jar", war, 
+	cmd := exec.Command("java", 
+		"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+		// disable setup wizard
+		"-Djenkins.install.runSetupWizard=false",
+		"-Djava.util.logging.config.file=.jenkinsfile-runner/logging.properties",
+		"-jar", war, 
 		// Disable http (so we can run in parallel without port collisions)
 		"--httpPort=-1", 
-		// redirect logs to a file
-		"--logfile=.jenkinsfile-runner/jenkins.log",
-		// "--commonLibFolder=.jenkinsfile-runner/lib",
-		// disable setup wizard
-		"-Djenkins.install.runSetupWizard=false")
+		// redirect logs to a file, but then System.out is overriden to redirect to file
+		// "--logfile=.jenkinsfile-runner/jenkins.log",		
+		// "--debug=2", doesn't have any effet !
+	)
 	cmd.Env = append(os.Environ(), "JENKINS_HOME=.jenkinsfile-runner")
 
 	cmd.Stdout = os.Stdout	
@@ -140,6 +158,7 @@ func InstallJenkinsfileRunner() {
 			panic(err)
 		}
 	}	
+
     if err := os.Link("target/jenkinsfile-runner.hpi", ".jenkinsfile-runner/plugins/jenkinsfile-runner.hpi"); err != nil {
         panic(err)
     }
