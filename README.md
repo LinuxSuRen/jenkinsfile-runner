@@ -30,6 +30,23 @@ As a result of this machinery you get your Jenkinsfile running from CLI, within 
 of plugins and configuration your project has been designed for (more of this later). And you can then push to `master`
 with confidence (or don't need to `push --force` or squash-merge to pretend you did it right with a single commit).
 
+
+## How to
+
+Jenkinsfile Runner is a command line tool you can invoke from any project directory containing a Jenkinsfile. It's a standalone
+executable but require `java` in your PATH so it can run a Jenkins headless master.
+
+Jenkinsfile Runner do:
+
+- download latest Jenkins LTS
+- install plugins as defined by a `plugins.txt` file in project directory. If non set it will install latest `workflow-aggregator`
+- setup `.jenkinsfile-runner` directory within your project with a JENKINS_HOME to run your build
+- run Jenkins master headless with a custom plugin installed to immediately run a single job based on local Jenkinsfile, then shutdown on completion.
+
+ 
+
+
+
 ## Implementation
 
 Jenkinsfile Runner is a `go` program to setup a transient, headless Jenkins master. It automatically install the set of
@@ -40,3 +57,4 @@ on to define the expected Jenkins configuration required for your pipeline scrip
 Within this transient jenkins master, a dedicated plugin is injected and will automatically create a job to run your
 Jenkinsfile from local filesystem. This plugin also hacks Jenkins to redirect the build log to stdout, and shut down 
 master when job is completed. 
+

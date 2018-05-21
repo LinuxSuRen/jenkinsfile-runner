@@ -11,16 +11,32 @@ import (
 	"time"
 	"bufio"
 	"strings"
+	"path/filepath"
 	"github.com/gnewton/jargo"
+	home "github.com/mitchellh/go-homedir"
 )
 
 func main() {
-    _, err := os.Getwd()
+
+	home, err := home.Dir()
 	if err != nil {
 		panic(err)
 	}
 
-	version := GetLatestCoreVersion()
+	cache := home + "/.jenkinsfile-runner"
+	_, err = os.Stat(cache) 
+	if os.IsNotExist(err) {
+	    if err := os.MkdirAll(cache, 0755); err != nil {
+	        panic(err)
+	    }
+	}
+
+    _, err = os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	version := GetLatestCoreVersion(cache)
     fmt.Printf("Running Pipeline on jenkins %s\n", version)
 
 	_, err = os.Stat(".jenkinsfile-runner/plugins") 
@@ -30,12 +46,12 @@ func main() {
 	    }
 	}
 
-	war, err := GetJenkinsWar(version)
+	war, err := GetJenkinsWar(version, cache)
 	if err != nil {
 		panic(err)
 	}
 
-	InstallPlugins()
+	InstallPlugins(cache)
 
 
 	InstallJenkinsfileRunner()
@@ -86,69 +102,51 @@ java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter`)
 	}
 }
 
-func GetLatestCoreVersion() string {
-	resp, err := http.Get("http://updates.jenkins.io/stable/latestCore.txt")
-	if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close()
-    if resp.StatusCode != http.StatusOK {
-    	fmt.Printf("can't get latest code %s\n", resp.StatusCode)
-    	os.Exit(1)
-    }
+func GetLatestCoreVersion(cache string) string {
 
-    bodyBytes, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        panic(err)
-    }
-    latest := string(bodyBytes)
-    return latest;
+	latest := filepath.Join(cache, "war", "latest.txt")	
+	info, err := os.Stat(latest) 
+	if os.IsNotExist(err) || needUpdate(info) {
+		if err = download("http://updates.jenkins.io/stable/latestCore.txt", "latestCore", latest); err != nil {
+			panic(err)
+		}
+	} 
+
+	bytes, err := ioutil.ReadFile(latest)
+	if err != nil {
+		panic(err)
+	}
+
+    return string(bytes);
 }
 
-func GetJenkinsWar(version string) (string, error) {
-	war := fmt.Sprintf(".jenkinsfile-runner/jenkins-%s.war", version)
-	_, err := os.Stat(war) 
+func GetJenkinsWar(version string, cache string) (string, error) {
+	war := fmt.Sprintf("jenkins-%s.war", version)
+	installed := filepath.Join(".jenkinsfile-runner", war)
+	_, err := os.Stat(installed) 
 	if os.IsNotExist(err) {
 
-		fmt.Printf("Downloading jenkins %s...\n", version)
+		local := filepath.Join(cache, "war",  war)
+		_, err = os.Stat(local) 
+		if os.IsNotExist(err) {
+			url := fmt.Sprintf("http://updates.jenkins.io/download/war/%s/jenkins.war", version)
+			if err = download(url, "Jenkins " + version, local); err != nil {
+				return installed, err
+			}
+		}
 
-	    out, err := os.Create(war)
-	    if err != nil {	    	
-	        return war, err
+	    if _, err := os.Stat(installed); err == nil {
+		    if err = os.Remove(installed); err != nil {
+		    	panic(err)
+		    }
+		}
+	    if err = os.Symlink(local, installed); err != nil {
+	    	return installed, err	
 	    }
-		defer out.Close()
+	    return installed, nil
 
-		url := fmt.Sprintf("http://updates.jenkins.io/download/war/%s/jenkins.war", version)
-		resp, err := http.Get(url)
-		if err != nil {	    	
-	        panic(err)
-	    }
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-	    	fmt.Printf("failed to download jenkins war. HTTP %s\n", resp.StatusCode)
-	    	return war, err
-	    }
-	    size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
-
-	    ticker := time.NewTicker(time.Second * 2)
-	    defer ticker.Stop()
-
-	    go func() {
-    		for _ = range ticker.C {
-    			fi, err := os.Stat(war)
-    			if err == nil {
-    				downloaded := fi.Size()
-	    			percent := 100 * float64(downloaded) / float64(size)
-	    			fmt.Printf("%d (%.0f %%)\n", downloaded, percent)
-    			}
-    		}
-    	}()	
-
-		if _, err := io.Copy(out, resp.Body); err != nil {
-	        return war, err
-	    }
 	}
-	return war, nil;
+	return installed, nil;
 }
 
 
@@ -164,7 +162,7 @@ func InstallJenkinsfileRunner() {
     }
 }
 
-func InstallPlugins() {
+func InstallPlugins(cache string) {
 
 	installed := []string{}	
 	plugins := []string{}
@@ -198,7 +196,7 @@ func InstallPlugins() {
 		shortname := spec[0]
 		installed = append(installed, shortname)
 		version := spec[1]
-		dependsOn = append(dependsOn, InstallPlugin(shortname, version)...)
+		dependsOn = append(dependsOn, InstallPlugin(shortname, version, cache)...)
 	}
 
 	for len(dependsOn) > 0 {
@@ -207,55 +205,35 @@ func InstallPlugins() {
 		if contains(installed, shortname) {
 			continue
 		} 
-		dependsOn = append(dependsOn, InstallPlugin(shortname, "latest")...)
+		dependsOn = append(dependsOn, InstallPlugin(shortname, "latest", cache)...)
 		installed = append(installed, shortname)
 	}
 }
 
-func InstallPlugin(shortname string, version string) []string {
+func InstallPlugin(shortname string, version string, cache string) []string {
 
-	hpi := fmt.Sprintf(".jenkinsfile-runner/plugins/%s-%s.hpi", shortname, version)
-	_, err := os.Stat(hpi); 
+	name := fmt.Sprintf("%s-%s.hpi", shortname, version)
+	hpi := filepath.Join(".jenkinsfile-runner", "plugins", name)
+
+	local := filepath.Join(cache, "plugins", shortname, name)	
+	_, err := os.Stat(local); 
 	if os.IsNotExist(err) { 
-	    out, err := os.Create(hpi)
-	    if err != nil {	    	
-	        panic(err)
-	    }
-		defer out.Close()
-
 		url := fmt.Sprintf("http://updates.jenkins.io/download/plugins/%[1]s/%[2]s/%[1]s.hpi", shortname, version)
-		fmt.Printf("Downloading %s:%s...\n", shortname, version)
-		resp, err := http.Get(url)
-		if err != nil {	    	
-	        panic(err)
-	    }
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-	    	fmt.Printf("failed to download %s plugin. HTTP %s\n", shortname, resp.StatusCode)
-	    	panic(err)
-	    }
-	    size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
-
-	    ticker := time.NewTicker(time.Second * 2)
-	    defer ticker.Stop()
-
-	    go func() {
-    		for _ = range ticker.C {
-    			fi, err := os.Stat(hpi)
-    			if err == nil {
-    				downloaded := fi.Size()
-	    			percent := 100 * float64(downloaded) / float64(size)
-	    			fmt.Printf("%d (%.0f %%)\n", downloaded, percent)
-    			}
-    		}
-    	}()	
-
-		if _, err := io.Copy(out, resp.Body); err != nil {
-	        panic(err)
-	    }
+		if err = download(url, shortname + ":" + version, local); err != nil {
+			panic(err)
+		}
     }
 
-    manifest, err := jargo.GetManifest(hpi)
+    if _, err := os.Stat(hpi); err == nil {
+	    if err = os.Remove(hpi); err != nil {
+	    	panic(err)
+	    }
+	}
+    if err = os.Symlink(local, hpi); err != nil {
+    	panic(err)
+    }
+
+    manifest, err := jargo.GetManifest(local)
     if err != nil {
     	panic(err)
     }
@@ -273,6 +251,75 @@ func InstallPlugin(shortname string, version string) []string {
     	dependsOn = append(dependsOn, strings.Split(d, ":")[0])
     }
     return dependsOn
+}
+
+func download(url string, description string, target string) error {
+	fmt.Printf("Downloading %s ...\n", description)
+	download := target+".download"
+
+	os.MkdirAll(filepath.Dir(target), 0755)
+
+	// Check for a previous aborted download attempt
+	if _, err := os.Stat(download); err == nil {
+		if err = os.Remove(download); err != nil {
+			return err
+		}
+	}
+
+    out, err := os.Create(download)
+    if err != nil {	    	
+        return err
+    }
+	defer out.Close()
+
+	resp, err := http.Get(url)
+	if err != nil {	    	
+        return err
+    }
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+    	fmt.Printf("failed to download %s. HTTP %s\n", description, resp.StatusCode)
+    	return err
+    }
+    size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
+
+    ticker := time.NewTicker(time.Second * 2)
+    defer ticker.Stop()
+
+    go func() {
+		for _ = range ticker.C {
+			fi, err := os.Stat(download)
+			if err == nil {
+				downloaded := fi.Size()
+    			percent := 100 * float64(downloaded) / float64(size)
+    			fmt.Printf("%10d (%.0f %%)\n", downloaded, percent)
+			}
+		}
+	}()	
+
+	if _, err := io.Copy(out, resp.Body); err != nil {
+        return err
+    }
+
+	if _, err := os.Stat(target); err == nil {
+    	if err = os.Remove(target); err != nil {
+    		return err
+    	}
+    }
+    if err = os.Rename(download, target); err != nil {
+    	return err
+    }
+    return nil
+}
+
+func needUpdate(file os.FileInfo) bool {
+
+	if file == nil {
+		return true
+	}
+
+	// Check at least once a day
+	return file.ModTime().Add(24 * 60 * 60 * 1000).Before(time.Now())
 }
 
 func contains(s []string, e string) bool {
