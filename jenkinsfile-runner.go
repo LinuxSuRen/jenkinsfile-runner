@@ -13,6 +13,7 @@ var jenkinsfile string
 var version string
 var cache string
 var workdir string
+var configfile string
 
 func main() {
 
@@ -27,7 +28,8 @@ func main() {
 
 	flag.StringVar(&jenkinsfile, "file", filepath.Join(wd, "Jenkinsfile"), "Jenkinsfile to run")
 	flag.StringVar(&version, "version", "latest", "Jenkins version to use")
-	flag.StringVar(&cache, "cache", filepath.Join(home, "/.jenkinsfile-runner"), "Directory used as download cache")
+	flag.StringVar(&cache, "cache", filepath.Join(home, ".jenkinsfile-runner"), "Directory used as download cache")
+	flag.StringVar(&configfile, "config", filepath.Join(wd, "jenkins.yaml"), "Configuration as Code file to setup jenkins master matching pipeline requirements")
 
 	flag.Parse()
 
@@ -78,7 +80,10 @@ java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter`)
 		// Disable http (so we can run in parallel without port collisions)
 		"--httpPort=-1",
 	)
-	cmd.Env = append(os.Environ(), "JENKINS_HOME="+workdir, "JENKINSFILE="+jenkinsfile)
+	cmd.Env = append(os.Environ(),
+		"JENKINS_HOME="+workdir,
+		"JENKINSFILE="+jenkinsfile,
+		"CASC_JENKINS_CONFIG="+configfile)
 
 	cmd.Stdout = os.Stdout	
 	cmd.Stderr = os.Stderr	
