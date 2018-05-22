@@ -25,9 +25,9 @@ func main() {
 		panic(err)
 	}
 
-	flag.StringVar(&jenkinsfile, "file", filepath.Join(wd, "Jenkinsfile"), "Jenkinsfile to run. Defaults to ./Jenkinsfile")
-	flag.StringVar(&version, "version", "latest", "Jenkins-core version to run. Defaults to latest LTS")
-	flag.StringVar(&cache, "cache", filepath.Join(home, "/.jenkinsfile-runner"), "Directory used as download cache. Defaults to ~/.jenkinsfile-runner")
+	flag.StringVar(&jenkinsfile, "file", filepath.Join(wd, "Jenkinsfile"), "Jenkinsfile to run")
+	flag.StringVar(&version, "version", "latest", "Jenkins version to use")
+	flag.StringVar(&cache, "cache", filepath.Join(home, "/.jenkinsfile-runner"), "Directory used as download cache")
 
 	flag.Parse()
 
