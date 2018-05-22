@@ -27,7 +27,7 @@ import java.io.IOException;
 public class JenkinsfileRunner extends RunListener<WorkflowRun> {
 
 
-    @Initializer(after = InitMilestone.JOB_LOADED, displayName = "jenkinsfile-runner", fatal = true)
+    @Initializer(after = InitMilestone.JOB_LOADED, fatal = true)
     public static void run() {
 
         try {
@@ -37,7 +37,7 @@ public class JenkinsfileRunner extends RunListener<WorkflowRun> {
 
             WorkflowJob w = j.createProject(WorkflowJob.class, "job");
             w.addProperty(new DurabilityHintJobProperty(FlowDurabilityHint.PERFORMANCE_OPTIMIZED));
-            final File jenkinsfile = new File("./Jenkinsfile");
+            final File jenkinsfile = new File(System.getenv("JENKINSFILE"));
             w.setDefinition(new CpsScmFlowDefinition(
                     new FileSystemSCM(jenkinsfile.getParentFile()), jenkinsfile.getName()));
             QueueTaskFuture<WorkflowRun> f = w.scheduleBuild2(0,
