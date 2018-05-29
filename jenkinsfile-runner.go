@@ -14,6 +14,7 @@ var version string
 var cache string
 var workdir string
 var configfile string
+var secretsfile string
 
 func main() {
 
@@ -30,6 +31,7 @@ func main() {
 	flag.StringVar(&version, "version", "latest", "Jenkins version to use")
 	flag.StringVar(&cache, "cache", filepath.Join(home, ".jenkinsfile-runner"), "Directory used as download cache")
 	flag.StringVar(&configfile, "config", filepath.Join(wd, "jenkins.yaml"), "Configuration as Code file to setup jenkins master matching pipeline requirements")
+	flag.StringVar(&secretsfile, "secrets", filepath.Join(wd, "secrets.gpg"), "GPG encrypted file containing required secrets to configure jenkins master")
 
 	flag.Parse()
 
@@ -62,6 +64,16 @@ func main() {
 	mkdir(filepath.Join(workdir, "plugins"))
 	installPlugins()
 	InstallJenkinsfileRunner()
+
+	if _, err = os.Stat(secretsfile); err == nil {
+		fmt.Printf("Using secrets from %s\n", secretsfile)
+		secrets, err := decrypt(secretsfile)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(secrets)
+	}
+
 
 	writeFile(filepath.Join(workdir, "logging.properties"), `
 .level = INFO
