@@ -34,8 +34,55 @@ Jenkinsfile Runner do:
 - download latest Jenkins LTS
 - install plugins as defined by a `plugins.txt` file in project directory. If non set it will install latest `workflow-aggregator`
 - setup `.jenkinsfile-runner` directory within your project with a JENKINS_HOME to run your build
+- create a `.secret` directory with secrets from a `secrets.gpg` GPG-encrypted file.  
 - run Jenkins master headless with a custom plugin installed to immediately run a single job based on local Jenkinsfile, then shutdown on completion.
 
+
+### Jenkins core version
+
+You can choose the version of jenkins to run passing `-version` argument. Default value `latest` is an alias for
+"_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to download cache before
+jenkins is started from local `.jenkisnfile-runner` JENKINS_HOME
+
+### Plugins
+
+You can include a `plugins.txt` file with plugins required to run your pipeline. Jenkinsfile-runner will 
+download those plugins and dependencies into dowload cache and setup `.jenkisnfile-runner` JENKINS_HOME
+accordingly.
+
+### Master Configuration
+
+For non-trivial pipelines you'll need some way to configure Jenkins master, for sample to declare some
+credentials referred by ID in your `Jenkinsfile`. Jenkinsfile-runner relies on 
+[Configuration-as-Code](https://github.com/jenkinsci/jep/tree/master/jep/201) for this purpose. you only
+need to provide a `jenkins.yaml` file aside your `Jenkinsfile` to have the transient jenkins master
+configured accordingly. 
+
+### Sensitive data
+
+Your pipeline might require some sensitive data that you don't want to store in plain text in your SCM. 
+For this purpose you can define them in a `secrets` file in java properties format, and encrypt it with
+[GPG](https://www.gnupg.org/) allowing your teammates to decrypt this file: 
+
+```bash
+gpg --encrypt --recipient bob@acme.org --recipient alice@acme.org (...) secrets
+``` 
+This will produce an encrypted `secrets.gpg` file you can safely commit to SCM. **Never** commit the
+initial secrets file (once encrypted, you can delete it). We highly recommend you add it to your
+`.gitignore` to avoid mistakes.
+
+We suggest you manage teammates gpg public keys in your SCM as a `keyring` to ensure everybody in the 
+team knows each other GPG identity.
+
+When such a `secrets.gpg` file exists aside your `Jenkinsfile` (or set by `-secrets option) Jenkinsfile-runner
+will create a `.secrets` directory in `.jenkisnfile-runner` JENKINS_HOME following Docker secrets layout, 
+fully compatible with Configuration-as-Code so you can define your configuration with secret replacements:
+
+```yaml
+jenkins:
+    somethingSecret: ${NEVER_STORED_IN_PLAIN_TEXT}
+```  
+To enforce security, this folder is deleted when Jenkinsfile-runner completes. 
 
 ## Implementation
 
