@@ -14,10 +14,10 @@ Jenkinsfile Runner is an experiment to package Jenkins pipeline execution as a c
 ## Build
 
 Currently there's no released distribution, so you must first build the code by yourself:
+You need Maven and Go SDK installed
 
 ```sh
-mvn package
-go install 
+make build 
 ```
 
 Assuming you have `$GOBIN` well set and declared in your `PATH`, you now have command line `jenkinsfile-runner` 

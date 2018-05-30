@@ -14,6 +14,7 @@
     <properties>
         <jenkins.version>2.60.3</jenkins.version>
         <java.level>8</java.level>
+        <maven-hpi-plugin.disabledTestInjection>true</maven-hpi-plugin.disabledTestInjection>
     </properties>
     <name>Jenkinsfile-Runner Plugin</name>
     <licenses>
