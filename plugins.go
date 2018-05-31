@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"bufio"
+	"regexp"
 )
 
 // Install all plugins required by the target Jenkinsfile.
@@ -15,6 +16,7 @@ func installPlugins() {
 
 	installed := []string{}
 	plugins := []string{}
+	r := regexp.MustCompile(`^(.*):([^@]*)(@.*)?$`)
 
 	/* prepare JENKINS-34002
 		b, err := ioutil.Readfile("Jenkinsfile")
@@ -31,9 +33,9 @@ func installPlugins() {
 
 	_, err := os.Stat("plugins.txt")
 	if os.IsNotExist(err) {
+		// no plugin specified, let's install workflow-aggregator
 		plugins = append(plugins, "workflow-aggregator:latest")
-	} else if os.IsNotExist(err) {
-		// no default plugin selected, let's install workflow-aggregator
+	} else if err == nil {
 
 		file, err := os.Open("plugins.txt")
 		if err != nil {
@@ -55,11 +57,12 @@ func installPlugins() {
 
 	dependsOn := []string{}
 	for _, s := range plugins {
-		spec := strings.Split(s, ":")
-		shortname := spec[0]
+		match := r.FindStringSubmatch(s)
+		shortname := match[1]
 		installed = append(installed, shortname)
-		version := spec[1]
-		dependsOn = append(dependsOn, installPlugin(shortname, version)...)
+		version := match[2]
+		site := match[3]
+		dependsOn = append(dependsOn, installPlugin(shortname, version, site)...)
 	}
 
 	for len(dependsOn) > 0 {
@@ -68,14 +71,24 @@ func installPlugins() {
 		if contains(installed, shortname) {
 			continue
 		}
-		dependsOn = append(dependsOn, installPlugin(shortname, "latest")...)
+		dependsOn = append(dependsOn, installPlugin(shortname, "latest", "default")...)
 		installed = append(installed, shortname)
 	}
 }
 
 // Install a specific plugin : version using the cached artifact if present.
 // return the list of required dependencies for installed plugin
-func installPlugin(shortname string, version string) []string {
+func installPlugin(shortname string, version string, site string) []string {
+
+	if site == "" {
+		site = "@default"
+	}
+
+	baseUrl := updatesites[site]
+	if baseUrl == "" {
+		fmt.Printf("unknown update site %s, use -site option to set URL\n", site)
+		os.Exit(66)
+	}
 
 	name := fmt.Sprintf("%s-%s.hpi", shortname, version)
 	hpi := filepath.Join(workdir, "plugins", name)
@@ -83,7 +96,7 @@ func installPlugin(shortname string, version string) []string {
 	local := filepath.Join(cache, "plugins", shortname, name)
 	_, err := os.Stat(local);
 	if os.IsNotExist(err) {
-		url := fmt.Sprintf("http://updates.jenkins.io/download/plugins/%[1]s/%[2]s/%[1]s.hpi", shortname, version)
+		url := fmt.Sprintf("%[1]s/download/plugins/%[2]s/%[3]s/%[2]s.hpi", baseUrl, shortname, version)
 		if err = download(url, shortname + ":" + version, local); err != nil {
 			panic(err)
 		}

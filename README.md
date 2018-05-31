@@ -41,14 +41,30 @@ Jenkinsfile Runner do:
 ### Jenkins core version
 
 You can choose the version of jenkins to run passing `-version` argument. Default value `latest` is an alias for
-"_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to download cache before
+"_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to [download cache](#cache) before
 jenkins is started from local `.jenkisnfile-runner` JENKINS_HOME
 
 ### Plugins
 
 You can include a `plugins.txt` file with plugins required to run your pipeline. Jenkinsfile-runner will 
-download those plugins and dependencies into dowload cache and setup `.jenkisnfile-runner` JENKINS_HOME
+download those plugins and dependencies into [download cache](#cache) and setup `.jenkisnfile-runner` JENKINS_HOME
 accordingly.
+
+`plugins.txt` file is a plain text format with a plugin per line, as
+`<shortname>:<version>` 
+
+If you use a custom update site to host your own plugins, you can suffix plugins with optional `@updatesiteId` and 
+pass `-site` argument using `id=url` format to Jenkinsfile-runner.
+ 
+
+Note: once [JENKINS-34002](https://issues.jenkins-ci.org/browse/JENKINS-34002) is implemented we will also
+pick required dependencies from `Jenkinsfile`. 
+
+### <a name="cache"></a>Download Cache
+
+As Jenkinsfile-runner do download jenkins.war and plugins on-demand, it relies on a download cache.
+Default location is `$HOME/.jenkinsfile-runner` but you can override using `-cache` option.
+
 
 ### Master Configuration
 
@@ -74,7 +90,7 @@ initial secrets file (once encrypted, you can delete it). We highly recommend yo
 We suggest you manage teammates gpg public keys in your SCM as a `keyring` to ensure everybody in the 
 team knows each other GPG identity.
 
-When such a `secrets.gpg` file exists aside your `Jenkinsfile` (or set by `-secrets option) Jenkinsfile-runner
+When such a `secrets.gpg` file exists aside your `Jenkinsfile` (or set by `-secrets` option) Jenkinsfile-runner
 will create a `.secrets` directory in `.jenkisnfile-runner` JENKINS_HOME following Docker secrets layout, 
 fully compatible with Configuration-as-Code so you can define your configuration with secret replacements:
 

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 	"io"
+	"errors"
 )
 
 // Download artifact specified by url to target file.
@@ -36,8 +37,8 @@ func download(url string, description string, target string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("failed to download %s. HTTP %s\n", description, resp.StatusCode)
-		return err
+		e := fmt.Sprintf("failed to download %s from %s: HTTP %d", description, url, resp.StatusCode)
+		return errors.New(e)
 	}
 	size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
 
