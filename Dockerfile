@@ -24,6 +24,10 @@ RUN go install
 
 FROM openjdk:8
 
+LABEL maintainer=nicolas.deloof@gmail.com \
+      org.label-schema.vcs-ref=$GIT_COMMIT \
+      org.label-schema.vcs-url="https://github.com/ndeloof/jenkinsfile-runner"
+
 RUN wget -O go.tgz https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz ; \
     tar -C /usr/local -xzf go.tgz; \
     rm go.tgz;
