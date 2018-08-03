@@ -23,6 +23,7 @@ RUN go install
 # ---
 
 FROM openjdk:8
+ARG GIT_COMMIT
 
 LABEL maintainer=nicolas.deloof@gmail.com \
       org.label-schema.vcs-ref=$GIT_COMMIT \

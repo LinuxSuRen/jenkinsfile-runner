@@ -2,6 +2,7 @@
 
 [![Join the chat at https://gitter.im/jenkins/jenkinsfile-runner](https://img.shields.io/badge/%E2%8A%AA%20gitter%20-Join%20chat%20%E2%86%92-brightgreen.svg?style=flat)](https://gitter.im/jenkins/jenkinsfile-runner?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+[![](https://images.microbadger.com/badges/image/jenkins/jenkinsfile-runner.svg)](https://microbadger.com/images/jenkins/jenkinsfile-runner "Get your own image badge on microbadger.com")
 
 
 ![Logo](logo.png)
