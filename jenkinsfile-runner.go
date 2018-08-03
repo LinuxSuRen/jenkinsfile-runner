@@ -32,6 +32,17 @@ func (f *updateSitesFlag) String() string {
 var updatesites updateSitesFlag = make(updateSitesFlag)
 
 func main() {
+	status := mainExitCode()
+	if status != 0 {
+		fmt.Println()
+		fmt.Println("Something went wrong running your Jenkinsfile.")
+		fmt.Println("If you think this is a bug, please report on https://github.com/ndeloof/jenkinsfile-runner/issues")
+		fmt.Println("and if you miss some feature, please join https://gitter.im/jenkinsci/jenkinsfile-runner to discuss about it.")
+	}
+	os.Exit(status)
+}
+
+func mainExitCode() int {
 
 	home, err := home.Dir()
 	if err != nil {
@@ -50,22 +61,22 @@ func main() {
 	flag.StringVar(&configfile, "config", filepath.Join(wd, "jenkins.yaml"), "Configuration as Code file to setup jenkins master matching pipeline requirements")
 	flag.StringVar(&secretsfile, "secrets", filepath.Join(wd, "secrets.gpg"), "GPG encrypted file containing sensitive data required to configure jenkins for your Pipeline")
 	flag.Var(&updatesites, "site", "Update site to download plugins from. 'default=https://updates.jenkins.io/'")
+	flag.StringVar(&workdir, "workdir", filepath.Join(wd, ".jenkinsfile-runner"), "Directory used to run headless jenkins master")
 
 	flag.Parse()
 
 	_, err = os.Stat(jenkinsfile)
 	if os.IsNotExist(err) {
-		fmt.Errorf("No such file %s", jenkinsfile)
-		os.Exit(-1)
+		fmt.Fprintf(os.Stderr,"No such file %s\n", jenkinsfile)
+		return -1
 	}
 
 	jenkinsfile, err = filepath.Abs(jenkinsfile)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr,"Can't find path to %s\n", jenkinsfile)
+		return -1
 	}
-	workdir = filepath.Join(filepath.Dir(jenkinsfile), ".jenkinsfile-runner")
 	mkdir(workdir)
-
 	mkdir(cache)
 
 	if version == "latest" {
@@ -76,12 +87,21 @@ func main() {
 
 	war, err := getJenkinsWar(version)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr,"Failed to install Jenkins %s\n", version)
+		return -1
 	}
 
 	mkdir(filepath.Join(workdir, "plugins"))
-	installPlugins()
-	InstallJenkinsfileRunner()
+	err = installPlugins()
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to install plugins: %s\n", err)
+		return -1
+	}
+	err = InstallJenkinsfileRunner()
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to install jenkinsfile-runner plugin: %s\n", err)
+		return -1
+	}
 
 	secretsDir := filepath.Join(workdir, ".secrets")
 	if _, err = os.Stat(secretsfile); err == nil {
@@ -125,14 +145,13 @@ java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter`)
 
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("cmd.Start() failed with %s\n", err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
 
 
-
-
-func InstallJenkinsfileRunner() {
+func InstallJenkinsfileRunner() error {
 	hpi := filepath.Join(workdir, "plugins", "jenkinsfile-runner.hpi")
 
 	if _, err := os.Stat(hpi); err == nil {
@@ -142,12 +161,17 @@ func InstallJenkinsfileRunner() {
 	}	
 
 	// TODO hpi file should be package within the jenkinsfile-runner binary as a "resource"
-	home, err := home.Dir()
+	// not sure about the preferred way to implement this in Go
+
+	// We expect jenkinsfile-runner.hpi to be installed aside jenkinsfile-runner executable
+	self, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("Failed to retrieve jenkinsfile-runner installation path: %s", err)
 	}
-    if err := os.Link(home+"/.m2/repository/io/jenkins/plugins/jenkinsfile-runner/1.0-SNAPSHOT/jenkinsfile-runner-1.0-SNAPSHOT.hpi", hpi); err != nil {
-        panic(err)
+
+    if err := os.Link(filepath.Join(self, "jenkinsfile-runner.hpi"), hpi); err != nil {
+		return err
     }
+    return nil
 }
 

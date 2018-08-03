@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"bytes"
 	"github.com/rickar/props"
-	"github.com/codeship/jet/errors"
 	"golang.org/x/crypto/ssh/terminal"
 	"syscall"
+	"errors"
 )
 
 
