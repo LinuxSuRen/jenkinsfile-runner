@@ -1,2 +1,5 @@
 .jenkinsfile-runner/
 jenkinsfile-runner
+target/
+.idea/
+vendor/
