@@ -11,18 +11,6 @@ Jenkinsfile Runner is an experiment to package Jenkins pipeline execution as a c
 - Integration test shared libraries
 
 
-## Build
-
-Currently there's no released distribution, so you must first build the code by yourself:
-You need Maven and Go SDK installed
-
-```sh
-make build 
-```
-
-Assuming you have `$GOBIN` well set and declared in your `PATH`, you now have command line `jenkinsfile-runner` 
-available to run from any directory containing a Jenkinsfile.   
-
 
 ## Usage
 
@@ -32,11 +20,72 @@ executable but require `java` in your PATH so it can run a Jenkins headless mast
 Jenkinsfile Runner do:
 
 - download latest Jenkins LTS
-- install plugins as defined by a `plugins.txt` file in project directory. If non set it will install latest `workflow-aggregator`
-- setup `.jenkinsfile-runner` directory within your project with a JENKINS_HOME to run your build
-- create a `.secret` directory with secrets from a `secrets.gpg` GPG-encrypted file.  
+- setup a temporary JENKINS_HOME directory to run a headless jenkins for your Pipeline
+- install plugins as defined by a `plugins.txt` file in project directory. If none set, it will install latest `workflow-aggregator`
+- optionally create a `.secret` directory with secrets from a `secrets.gpg` GPG-encrypted file. Read mode on [sensitive data](#Sensitive data)  
 - run Jenkins master headless with a custom plugin installed to immediately run a single job based on local Jenkinsfile, then shutdown on completion.
 
+### Docker image
+
+For your convenience you can use `jenkins/jenkinsfile-runner` docker image
+
+```bash
+$ docker run -it -v $(pwd):/workspace jenkins/jenkinsfile-runner
+```` 
+
+To avoid repeated download we suggest you define volumes for the download caches
+
+```bash
+$ docker run -it -v $(pwd):/workspace                         \
+    -v jenkinsfile-runner-cache:/var/jenkinsfile-runner-cache \
+    jenkins/jenkinsfile-runner
+```` 
+
+### Advanced docker image use and recommendations
+
+We recommended to make the transient JENKINS_HOME a temporary volume so you don't consume all disk space with 
+repeated builds:  
+
+```bash
+$ docker run -it -v $(pwd):/workspace                         \
+    --tmpfs /var/jenkinsfile-runner                           \
+    -v jenkinsfile-runner-cache:/var/jenkinsfile-runner-cache \
+    jenkins/jenkinsfile-runner
+```` 
+
+Alternatively you might want to **reuse** this folder between runs, can be usefull to collect build output and
+diagnose jenkinsfile-runner issues:
+
+```bash
+$ docker run -it -v $(pwd):/workspace                         \
+    -v $(pwd)/jenkinsfile-runner:/var/jenkinsfile-runner                           \
+    -v jenkinsfile-runner-cache:/var/jenkinsfile-runner-cache \
+    jenkins/jenkinsfile-runner
+```` 
+
+
+
+## Build
+
+Currently there's no released distribution, so you must first build the code by yourself:
+You need Maven and Go SDK installed.
+We also use [dep](https://github.com/golang/dep) for goland gependencies and vendor folder management.
+
+You can either build with Dockerfile :
+```sh
+docker build -t jenkins/jenkinsfile-runner . 
+```
+
+or if you have adequate tools installed :
+
+```sh
+mvn install
+dep ensure
+go install 
+```
+
+Assuming you have `$GOBIN` well set and declared in your `PATH`, you now have command line `jenkinsfile-runner` 
+available to run from any directory containing a Jenkinsfile.   
 
 ### Jenkins core version
 
