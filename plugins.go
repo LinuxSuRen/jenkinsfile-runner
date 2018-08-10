@@ -74,7 +74,7 @@ func installPlugins() error {
 		if contains(installed, shortname) {
 			continue
 		}
-		p, err := installPlugin(shortname, "latest", "default")
+		p, err := installPlugin(shortname, "latest", "@default")
 		if err != nil {
 			return fmt.Errorf("Failed to install %s:%s: %s", shortname, version, err)
 		}
