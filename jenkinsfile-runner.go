@@ -166,12 +166,23 @@ func InstallJenkinsfileRunner() error {
 	// not sure about the preferred way to implement this in Go
 
 	// We expect jenkinsfile-runner.hpi to be installed aside jenkinsfile-runner executable
-	self, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	exec, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve jenkinsfile-runner executable path: %s", err)
+	}
+
+	self, err := filepath.Abs(filepath.Dir(exec))
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve jenkinsfile-runner installation path: %s", err)
 	}
 
-    if err := os.Link(filepath.Join(self, "jenkinsfile-runner.hpi"), hpi); err != nil {
+	source := filepath.Join(self, "jenkinsfile-runner.hpi")
+	_, err = os.Stat(source)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("Failed to retrieve jenkinsfile-runner.hpi", err)
+	}
+
+    if err := os.Link(source, hpi); err != nil {
 		return err
     }
     return nil
