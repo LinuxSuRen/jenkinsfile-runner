@@ -37,22 +37,22 @@ func installPlugins() error {
 		plugins = append(plugins, "workflow-aggregator:latest")
 	} else if err != nil {
 		return fmt.Errorf("Failed to access plugins.txt: %s", err)
-	}
+	} else {
+        file, err := os.Open("plugins.txt")
+        if err != nil {
+            return fmt.Errorf("Failed to open plugins.txt: %s", err)
+        }
+        defer file.Close()
 
-	file, err := os.Open("plugins.txt")
-	if err != nil {
-		return fmt.Errorf("Failed to open plugins.txt: %s", err)
-	}
-	defer file.Close()
+        scanner := bufio.NewScanner(file)
+        for scanner.Scan() {
+            plugins = append(plugins, scanner.Text())
+        }
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		plugins = append(plugins, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("Failed to parse plugins.txt: %s", err)
-	}
+        if err := scanner.Err(); err != nil {
+            return fmt.Errorf("Failed to parse plugins.txt: %s", err)
+        }
+    }
 
 	dependsOn := []string{}
 	for _, s := range plugins {
