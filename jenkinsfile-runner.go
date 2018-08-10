@@ -53,8 +53,6 @@ func mainExitCode() int {
 		panic(err)
 	}
 
-	updatesites["@default"] = "https://updates.jenkins.io"
-
 	flag.StringVar(&jenkinsfile, "file", filepath.Join(wd, "Jenkinsfile"), "Jenkinsfile to run")
 	flag.StringVar(&version, "version", "latest", "Jenkins version to use")
 	flag.StringVar(&cache, "cache", filepath.Join(home, ".jenkinsfile-runner"), "Directory used as download cache")
@@ -62,6 +60,10 @@ func mainExitCode() int {
 	flag.StringVar(&secretsfile, "secrets", filepath.Join(wd, "secrets.gpg"), "GPG encrypted file containing sensitive data required to configure jenkins for your Pipeline")
 	flag.Var(&updatesites, "site", "Update site to download plugins from. 'default=https://updates.jenkins.io/'")
 	flag.StringVar(&workdir, "workdir", filepath.Join(wd, ".jenkinsfile-runner"), "Directory used to run headless jenkins master")
+
+    if updatesites["@default"] == "" {
+	    updatesites["@default"] = "https://updates.jenkins.io"
+    }
 
 	flag.Parse()
 
