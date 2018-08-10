@@ -116,7 +116,10 @@ func installPlugin(shortname string, version string, site string) ([]string, err
 		}
 	}
 	if err = os.Symlink(local, hpi); err != nil {
-		return nil, fmt.Errorf("Failed to install hpi file %s\n", err)
+		err = copy(local, hpi)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to install hpi file %s\n", err)
+		}
 	}
 
 	manifest, err := jargo.GetManifest(local)

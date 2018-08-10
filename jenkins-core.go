@@ -48,7 +48,10 @@ func getJenkinsWar(version string) (string, error) {
 			}
 		}
 		if err = os.Symlink(local, installed); err != nil {
-			return installed, err
+			err = copy(local, installed)
+			if err != nil {
+				return installed, err
+			}
 		}
 		return installed, nil
 

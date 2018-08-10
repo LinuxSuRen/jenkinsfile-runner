@@ -183,7 +183,10 @@ func InstallJenkinsfileRunner() error {
 	}
 
     if err := os.Link(source, hpi); err != nil {
-		return err
+		err = copy(source, hpi)
+		if err != nil {
+			return fmt.Errorf("Failed to copy jenkinsfile-runner.hpi", err)
+		}
     }
     return nil
 }

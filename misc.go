@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 	"io/ioutil"
+	"io"
 )
 
 func mkdir(path string) {
@@ -41,4 +42,23 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func copy(source, destination string) error {
+	from, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer from.Close()
+
+	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0640)
+	if err != nil {
+		return err
+	}
+	defer to.Close()
+	_, err = io.Copy(to, from)
+	if err != nil {
+		return err
+	}
+	return nil
 }
