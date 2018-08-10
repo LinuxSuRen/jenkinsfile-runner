@@ -1,3 +1,5 @@
 #!/bin/bash
+set -e
+set -x
 # $IMAGE_NAME var is injected into the build so the tag is correct.
-docker build --build-arg GIT_COMMIT=`git rev-parse - short HEAD` -t $IMAGE_NAME .
+docker build --build-arg GIT_COMMIT=`git rev-parse --short HEAD` -t $IMAGE_NAME .
