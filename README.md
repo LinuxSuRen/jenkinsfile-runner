@@ -69,6 +69,9 @@ $ docker run -it -v $(pwd):/workspace                         \
     jenkins/jenkinsfile-runner
 ```` 
 
+### Use with knative
+
+see sample [here](knative/)
 
 
 ## Build

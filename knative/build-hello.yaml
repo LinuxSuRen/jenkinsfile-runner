@@ -1,0 +1,30 @@
+apiVersion: build.knative.dev/v1alpha1
+kind: Build
+metadata:
+  name: hello
+spec:
+  source:
+    git:
+      url: https://github.com/jstrachan/hello-world-jenkinsfile.git
+      revision: master
+  steps:
+  - name: release
+    image: jenkins/jenkinsfile-runner:latest
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: jenkinsfile-runner-cache
+      mountPath: /var/jenkinsfile-runner-cache
+    - name: jenkinsfile-runner
+      mountPath: /var/jenkinsfile-runner
+
+  volumes:
+  - name: jenkinsfile-runner-cache
+    hostPath:
+      path: /var/jenkinsfile-runner-cache
+      type: DirectoryOrCreate
+  - name: jenkinsfile-runner
+    hostPath:
+      path: /var/jenkinsfile-runner
+      type: DirectoryOrCreate
+
+
