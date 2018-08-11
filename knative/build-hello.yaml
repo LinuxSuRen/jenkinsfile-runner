@@ -23,8 +23,6 @@ spec:
       path: /var/jenkinsfile-runner-cache
       type: DirectoryOrCreate
   - name: jenkinsfile-runner
-    hostPath:
-      path: /var/jenkinsfile-runner
-      type: DirectoryOrCreate
+    emptyDir: {}
 
 
