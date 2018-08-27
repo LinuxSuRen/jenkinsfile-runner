@@ -30,6 +30,10 @@ func needUpdate(file os.FileInfo) bool {
 		return true
 	}
 
+	if offline {
+		return false
+	}
+
 	// Check at least once a day
 	return file.ModTime().Add(24 * 60 * 60 * 1000).Before(time.Now())
 }

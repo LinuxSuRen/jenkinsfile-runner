@@ -16,6 +16,7 @@ var cache string
 var workdir string
 var configfile string
 var secretsfile string
+var offline bool
 
 type updateSitesFlag map[string]string
 
@@ -60,6 +61,7 @@ func mainExitCode() int {
 	flag.StringVar(&secretsfile, "secrets", filepath.Join(wd, "secrets.gpg"), "GPG encrypted file containing sensitive data required to configure jenkins for your Pipeline")
 	flag.Var(&updatesites, "site", "Update site to download plugins from. 'default=https://updates.jenkins.io/'")
 	flag.StringVar(&workdir, "workdir", filepath.Join(wd, ".jenkinsfile-runner"), "Directory used to run headless jenkins master")
+	flag.BoolVar(&offline, "offline", false, "Run offline")
 
     if updatesites["@default"] == "" {
 	    updatesites["@default"] = "https://updates.jenkins.io"

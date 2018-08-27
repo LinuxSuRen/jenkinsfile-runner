@@ -13,6 +13,11 @@ import (
 
 // Download artifact specified by url to target file.
 func download(url string, description string, target string) error {
+
+	if offline {
+		return errors.New(fmt.Sprintf("Can't download %s: jenkinsfile-runner is running in offline mode.", description))
+	}
+
 	fmt.Printf("Downloading %s ...\n", description)
 	download := target+".download"
 
