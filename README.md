@@ -6,7 +6,7 @@
 [![](https://images.microbadger.com/badges/image/jenkins/jenkinsfile-runner.svg)](https://microbadger.com/images/jenkins/jenkinsfile-runner)
 
 
-![Logo](logo.png)
+![Logo](https://github.com/jenkinsci/jenkinsfile-runner/blob/master/logo.png)
 
 ## Introduction
 
