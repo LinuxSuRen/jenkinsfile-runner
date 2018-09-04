@@ -99,13 +99,13 @@ available to run from any directory containing a Jenkinsfile.
 ### Jenkins core version
 
 You can choose the version of jenkins to run passing `-version` argument. Default value `latest` is an alias for
-"_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to [download cache](#cache) before
+"_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to [download cache](#download-cache) before
 jenkins is started from local `.jenkisnfile-runner` JENKINS_HOME
 
 ### Plugins
 
 You can include a `plugins.txt` file with plugins required to run your pipeline. Jenkinsfile-runner will 
-download those plugins and dependencies into [download cache](#cache) and setup `.jenkisnfile-runner` JENKINS_HOME
+download those plugins and dependencies into [download cache](#download-cache) and setup `.jenkisnfile-runner` JENKINS_HOME
 accordingly.
 
 `plugins.txt` file is a plain text format with a plugin per line, as
@@ -118,7 +118,7 @@ pass `-site` argument using `id=url` format to Jenkinsfile-runner.
 Note: once [JENKINS-34002](https://issues.jenkins-ci.org/browse/JENKINS-34002) is implemented we will also
 pick required dependencies from `Jenkinsfile`. 
 
-### <a name="cache"></a>Download Cache
+### Download Cache
 
 As Jenkinsfile-runner do download jenkins.war and plugins on-demand, it relies on a download cache.
 Default location is `$HOME/.jenkinsfile-runner` but you can override using `-cache` option.
