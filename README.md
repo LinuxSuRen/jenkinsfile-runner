@@ -1,6 +1,6 @@
 # Jenkinsfile Runner
 
-[![Join the chat at https://gitter.im/jenkins/jenkinsfile-runner](https://img.shields.io/badge/%E2%8A%AA%20gitter%20-Join%20chat%20%E2%86%92-brightgreen.svg?style=flat)](https://gitter.im/jenkins/jenkinsfile-runner?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/jenkinsci/jenkinsfile-runner](https://img.shields.io/badge/%E2%8A%AA%20gitter%20-Join%20chat%20%E2%86%92-brightgreen.svg?style=flat)](https://gitter.im/jenkinsci/jenkinsfile-runner?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [![](https://images.microbadger.com/badges/commit/jenkins/jenkinsfile-runner.svg)](https://microbadger.com/images/jenkins/jenkinsfile-runner)
 [![](https://images.microbadger.com/badges/image/jenkins/jenkinsfile-runner.svg)](https://microbadger.com/images/jenkins/jenkinsfile-runner)
@@ -95,7 +95,7 @@ You can choose the version of jenkins to run by passing a `-version` argument. D
 
 ### Plugins
 
-You can include a `plugins.txt` file with plugins required to run your pipeline. Jenkinsfile-runner will download those plugins and dependencies into [download cache](#cache) and setup `.jenkinsfile-runner` JENKINS_HOME accordingly.
+You can include a `plugins.txt` file with plugins required to run your pipeline. Jenkinsfile-runner will download those plugins and dependencies into [download cache](#download-cache) and setup `.jenkinsfile-runner` JENKINS_HOME accordingly.
 
 `plugins.txt` file is a plain text format with a plugin per line, as `<shortname>:<version>` 
 
@@ -103,7 +103,7 @@ If you use a custom update site to host your own plugins, you can suffix plugins
 
 Note: once [JENKINS-34002](https://issues.jenkins-ci.org/browse/JENKINS-34002) is implemented we will also pick required dependencies from `Jenkinsfile`. 
 
-### <a name="cache"></a>Download Cache
+### Download Cache
 
 As Jenkinsfile-runner downloads jenkins.war and plugins on-demand, it relies on a download cache.
 Default location is `$HOME/.jenkinsfile-runner` but you can override using the `-cache` option.
