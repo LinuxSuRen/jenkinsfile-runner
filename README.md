@@ -91,7 +91,7 @@ Assuming you have `$GOBIN` well set and declared in your `PATH`, you now have co
 
 ### Jenkins core version
 
-You can choose the version of jenkins to run by passing a `-version` argument. Default value `latest` is an alias for "_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to [download cache](#cache) before jenkins is started from local `.jenkinsfile-runner` JENKINS_HOME
+You can choose the version of jenkins to run by passing a `-version` argument. Default value `latest` is an alias for "_latest LTS release_" which is checked once a day. The requested jenkins.war is downloaded to [download cache](#download-cache) before jenkins is started from local `.jenkinsfile-runner` JENKINS_HOME
 
 ### Plugins
 
