@@ -15,6 +15,8 @@ Jenkinsfile Runner is an experiment to package Jenkins pipeline execution as a c
 - Use Jenkins in Function-as-a-Service context
 - Integration test shared libraries
 
+Please report issues on [Jira](https://issues.jenkins-ci.org/issues?jql=component%20%3D%20jenkinsfile-runner)
+
 ## Usage
 
 Jenkinsfile Runner is a command line tool you can invoke from any project directory containing a Jenkinsfile. It's a standalone executable but requires `java` in your PATH so it can run a Jenkins headless master.
